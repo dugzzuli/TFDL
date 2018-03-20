@@ -15,4 +15,3 @@ for name in os.listdir(path):
             "image": tf.train.Feature(bytes_list=tf.train.BytesList(value=[img_raw]))
         }))
         writer.write(example.SerializeToString())
-
