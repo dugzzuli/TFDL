@@ -28,7 +28,7 @@ while flag:
         sess.run(train_op, feed_dict={x1_: x[0], x2_: x[1], y_: y})
     if sess.run(loss, feed_dict={x1_: x[0], x2_: x[1], y_: y}) <= threshold:
         flag = 0
-    print("weight1: ", weight1.eval(sess), "weight2: ", weight2.eval(sess),"bias:", bias.eval(sess))
+    print("weight1: ", weight1.eval(sess), "weight2: ", weight2.eval(sess), "bias:", bias.eval(sess))
 
 
 
