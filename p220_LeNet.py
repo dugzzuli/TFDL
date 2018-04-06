@@ -14,7 +14,7 @@ h_conv1 = tf.nn.sigmoid(conv1 + bias1)
 
 maxPool2 = tf.nn.max_pool(h_conv1, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME")
 
-filter2 = tf.Variable(tf.truncated_normal([5, 5, 5, 16]))
+filter2 = tf.Variable(tf.truncated_normal([5, 5, 6, 16]))
 bias2 = tf.Variable(tf.truncated_normal([16]))
 conv2 = tf.nn.conv2d(maxPool2, filter2, strides=[1, 1, 1, 1], padding='SAME')
 h_conv2 = tf.nn.sigmoid(conv2 + bias2)
