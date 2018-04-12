@@ -47,7 +47,7 @@ W_fc1 = tf.get_variable('W_fc1', [7 * 7 * 64, 1024], initializer=tf.truncated_no
 #b_fc1 = tf.Variable(tf.truncated_normal([1024]))
 b_fc1 = tf.get_variable("fc1_baises", [1024], initializer=tf.constant_initializer(0.1))
 h_pool2_flat = tf.reshape(maxPool3, [-1, 7 * 7 * 64])
-h_fc1 = tf.nn.sigmoid(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
+#h_fc1 = tf.nn.sigmoid(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
 h_fc1 = tf.nn.relu(tf.matmul(h_pool2_flat, W_fc1) + b_fc1)
 
 # 为了减少过拟合，加入Dropout层
@@ -75,7 +75,7 @@ train_step = tf.train.AdamOptimizer(0.0001).minimize(cross_entropy)
 # tf.argmax()返回的是某一维度上其数据最大所在的索引值，在这里即代表预测值和真实值
 # 判断预测值y和真实值y_中最大数的索引是否一致，y的值为1-10概率
 correct_prediction = tf.equal(tf.argmax(y_conv, 1), tf.argmax(y_, 1))
-#用亚运会来统计测试准确率
+# 用平均值来统计测试准确率
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 # 开始训练
