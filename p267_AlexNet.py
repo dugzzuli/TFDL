@@ -75,18 +75,18 @@ conv5 = tf.nn.relu(conv5)
 #池化层 5
 pool5 = tf.nn.avg_pool(conv5, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='VALID')
 
-#第六层全连接层
+#第六层全连接层 1
 reshape = tf.reshape(pool5, [-1, 13 * 13 * 256])
 #全连接层
 fc1 = tf.add(tf.matmul(reshape, W_conv['fc1']), b_conv['fc1'])
 fc1 = tf.nn.dropout(fc1, 0.5)
 
-#第七层全连接层
+#第七层全连接层 2
 fc2 = tf.add(tf.matmul(fc1, W_conv['fc2']), b_conv['fc2'])
 fc2 = tf.nn.relu(fc2)
 fc2 = tf.nn.dropout(fc2, 0.5)
 
-#第八层全连接层
+#第八层全连接层 3，即分类
 fc3 = tf.add(tf.matmul(fc2, W_conv['fc3']), b_conv['fc3'])
 
 #定义损失
