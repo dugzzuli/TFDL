@@ -2,17 +2,17 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-import p271_resize_img as reader2
+import ulibs as reader2
 import os
 from PIL import Image
 
-os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-X_train, y_train = reader2.get_file("./data/cat_and_dog/train")
+X_train, y_train = reader2.get_file("./data/cat_and_dog/train_r")
 image_batch, label_batch = reader2.get_batch(X_train, y_train, 227, 227, 200, 2048)
 
 
-def batch_norm(inputs, is_training, is_conv_out=True, decay = 0.999):
+def batch_norm(inputs, is_training, is_conv_out=True, decay=0.999):
     scale = tf.Variable(tf.ones([inputs.get_shape()[-1]]))
     beta = tf.Variable(tf.zeros([inputs.get_shape()[-1]]))
     pop_mean = tf.Variable(tf.zeros([inputs.get_shape()[-1]]), trainable=False)
@@ -25,7 +25,7 @@ def batch_norm(inputs, is_training, is_conv_out=True, decay = 0.999):
 
         train_mean = tf.assign(pop_mean,  pop_mean * decay + batch_mean * (1 - decay))
 
-        train_var = tf.assign(pop_var, pop_var * decay + batch_var *(1 - decay))
+        train_var = tf.assign(pop_var, pop_var * decay + batch_var * (1 - decay))
 
         with tf.control_dependencies([train_mean, train_var]):
             return tf.nn.batch_normalization(inputs, batch_mean, batch_var, beta, scale, 0.001)
@@ -37,6 +37,7 @@ with tf.device('/cpu:0'):
     #模型参数
     learning_rate = 1e-4
     training_iters = 200
+    batch_size = 200
     display_step = 5
     n_classes = 2
     n_fc1 = 4096
@@ -52,7 +53,7 @@ with tf.device('/cpu:0'):
         'conv3': tf.Variable(tf.truncated_normal([3, 3, 256, 384], stddev=0.01)),
         'conv4': tf.Variable(tf.truncated_normal([3, 3, 384, 384], stddev=0.01)),
         'conv5': tf.Variable(tf.truncated_normal([3, 3, 384, 256], stddev=0.01)),
-        'fc1': tf.Variable(tf.truncated_normal([13*13*256, n_fc1], stddev=0.1)),
+        'fc1': tf.Variable(tf.truncated_normal([6 * 6 * 256, n_fc1], stddev=0.1)),
         'fc2': tf.Variable(tf.truncated_normal([n_fc1, n_fc2], stddev=0.1)),
         'fc3': tf.Variable(tf.truncated_normal([n_fc2, n_classes], stddev=0.1)),
     }
@@ -64,10 +65,10 @@ with tf.device('/cpu:0'):
         'conv5': tf.Variable(tf.constant(0.1, dtype=tf.float32, shape=[256])),
         'fc1': tf.Variable(tf.constant(0.1, dtype=tf.float32, shape=[n_fc1])),
         'fc2': tf.Variable(tf.constant(0.1, dtype=tf.float32, shape=[n_fc2])),
-        'fc3': tf.Variable(tf.constant(0.1, dtype=tf.float32, shape=[n_classes])),
+        'fc3': tf.Variable(tf.constant(0.0, dtype=tf.float32, shape=[n_classes])),
     }
 
-    x_image = x
+    x_image = tf.reshape(x, [-1, 227, 227, 3])
 
     #卷积层 1
     conv1 = tf.nn.conv2d(x_image, W_conv['conv1'], strides=[1, 4, 4, 1], padding='VALID')
@@ -76,8 +77,7 @@ with tf.device('/cpu:0'):
     #池化层 1
     pool1 = tf.nn.avg_pool(conv1, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='VALID')
     #LRN层，Local Response Normalization
-    norm1 = tf.nn.lrn(pool1, 5, bias=1.0, alpha=0.01/9.0, beta=0.75)
-
+    norm1 = tf.nn.lrn(pool1, 5, bias=1.0, alpha=0.001/9.0, beta=0.75)
 
     #卷积层 2
     conv2 = tf.nn.conv2d(norm1, W_conv['conv2'], strides=[1, 1, 1, 1], padding="SAME")
@@ -103,13 +103,15 @@ with tf.device('/cpu:0'):
     conv5 = tf.nn.conv2d(conv4, W_conv['conv5'], strides=[1, 1, 1, 1], padding='SAME')
     conv5 = tf.nn.bias_add(conv5, b_conv['conv5'])
     conv5 = tf.nn.relu(conv5)
+
     #池化层 5
     pool5 = tf.nn.avg_pool(conv5, ksize=[1, 3, 3, 1], strides=[1, 2, 2, 1], padding='VALID')
 
     #全连接层 1
-    reshape = tf.reshape(pool5, [-1, 13 * 13 * 256])
+    reshape = tf.reshape(pool5, [-1, 6 * 6 * 256])
     #全连接层
     fc1 = tf.add(tf.matmul(reshape, W_conv['fc1']), b_conv['fc1'])
+    fc1 = tf.nn.relu(fc1)
     fc1 = tf.nn.dropout(fc1, 0.5)
 
     #全连接层 2
@@ -133,52 +135,56 @@ init = tf.global_variables_initializer()
 
 def onehot(labels):
     '''one-hot 编码'''
-    n_sample= len(labels)
+    n_sample = len(labels)
     n_class = max(labels) + 1
     onehot_labels = np.zeros((n_sample, n_class))
     onehot_labels[np.arange(n_sample), labels] = 1
     return onehot_labels
 
 
-save_model = "./data/AlexNetModel.ckpt"
+save_model = ".//data//AlexNetModel.ckpt"
 
-def train(opench):
+def train(epoch):
     with tf.Session() as sess:
         sess.run(init)
+
         save_model = "./data/model//AlexNetModel.ckpt"
         train_writer = tf.summary.FileWriter("./log", sess.graph)
         saver = tf.train.Saver()
-        loss = []
+
+        c = []
         start_time = time.time()
 
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(coord=coord)
         step = 0
-        for i in range(1):
+        for i in range(epoch):
             step = i
             image, label = sess.run([image_batch, label_batch])
+
             labels = onehot(label)
+
+            sess.run(optimizer, feed_dict={x: image, y: labels})
             loss_recode = sess.run(loss, feed_dict={x: image, y: labels})
             print("now the loss is %f" % loss_recode)
 
-            loss.append(loss_recode)
+            c.append(loss_recode)
             end_time = time.time()
             print("time: ", (end_time - start_time))
             start_time = end_time
             print("-------------%d onpech is finished -------------" % i)
         print("Optimization Finished!")
-        saver = tf.train.Saver()
         saver.save(sess, save_model)
         print("Model Save Finished!")
 
         coord.request_stop()
         coord.join(threads)
         plt.plot(loss)
+        plt.xlabel('Iter')
+        plt.ylabel('loss')
+        plt.title('lr=%f, ti=%d,bs=%d' % (learning_rate, training_iters))
         plt.tight_layout()
-        plt.savefig("./data/cnn-tf-AlexNet.png" % 0, dpi=200)
-
-        save_model = tf.train.latest_checkpoint("./data/model")
-        saver.restore(sess, save_model)
+        plt.savefig("./data/cat_and_dog_AlexNet.png" % 0, dpi=200)
 
 
 def per_class(imagefile):
@@ -192,7 +198,7 @@ def per_class(imagefile):
 
     saver = tf.train.Saver()
     with tf.Session() as sess:
-        save_model = tf.train.latest_checkpoint("./data/model")
+        save_model = tf.train.latest_checkpoint(".//data//model")
         saver.reshore(sess, save_model)
         image = tf.reshape(image, [1, 227, 227, 3])
         image = sess.run(image)
@@ -205,20 +211,24 @@ def per_class(imagefile):
             return "dog"
 
 
-imagefile = "./data/cat_and_dog/train"
-cat = dog = 0
+def predict():
+    imagefile = "./data/cat_and_dog/train"
+    cat = dog = 0
 
-train(1000)
-for root, sub_folders, files in os.walk(imagefile):
-    print("root=%s,sub_folders=%s, files=%s" % (root, sub_folders, files))
-    break
-    for name in files:
-        imagefile = os.path.join(root, name)
-        print(imagefile)
-        if per_class(imagefile) == "cat":
-            cat += 1
-        else:
-            dog += 1
-        print("cat is :", cat, "  |dog is : ", dog)
+    train(1000)
+    for root, sub_folders, files in os.walk(imagefile):
+        print("root=%s,sub_folders=%s, files=%s" % (root, sub_folders, files))
+
+        for name in files:
+            imagefile = os.path.join(root, name)
+            print(imagefile)
+            if per_class(imagefile) == "cat":
+                cat += 1
+            else:
+                dog += 1
+            print("cat is :", cat, "  |dog is : ", dog)
 
 
+if __name__ == "__main__":
+    train(100)
+    #predict()

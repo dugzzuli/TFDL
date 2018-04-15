@@ -6,6 +6,7 @@ import io
 
 
 def get_file(file_dir):
+    """获取图片数据文件位置和图片标签"""
     images = []
     temp = []
     for root, sub_folders, files in os.walk(file_dir):

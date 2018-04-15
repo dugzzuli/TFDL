@@ -33,7 +33,6 @@ def resize_img(in_dir, out_dir=None, dim=[227, 227]):
     cv2.waitKey(0)
 
 
-
 if __name__ == "__main__":
     #rebuild("./data/cat_and_dog/train/", "./data/cat_and_dog/train_r/")
     resize_img("./data/cat_and_dog/train/", "./data/cat_and_dog/train_r/")

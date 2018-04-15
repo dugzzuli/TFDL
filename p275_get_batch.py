@@ -23,5 +23,5 @@ def get_batch(image_list, label_list, img_width, img_height, batch_size, capacit
 
 if __name__ == "__main__":
     images_list, labels_list = ulibs.get_file("./data/cat_and_dog/train_r")
-    image_batch, label_batch = get_batch(images_list, labels_list, 227, 227, 50, 200)
+    image_batch, label_batch = get_batch(images_list, labels_list, 227, 227, 3, 200)
 

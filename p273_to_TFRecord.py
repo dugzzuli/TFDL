@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import tensorflow as tf
-import io
+from skimage import io
 import ulibs
 import cv2
 
@@ -22,7 +22,7 @@ def convert_to_tfrecord(images_list, labels_list, save_dir, name):
     for i in np.arange(0, n_samples):
         print("HHHA:====>", images_list[i])
         try:
-            image = cv2.imread(images_list[i]) # type(image) must be array!
+            image = io.imread(images_list[i]) # type(image) must be array!
             image_raw = image.tostring()
             label = int(labels_list[i])
             example = tf.train.Example(features=tf.train.Features(feature={''
