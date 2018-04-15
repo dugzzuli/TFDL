@@ -211,24 +211,21 @@ def per_class(imagefile):
             return "dog"
 
 
-def predict():
-    imagefile = "./data/cat_and_dog/train"
-    cat = dog = 0
 
-    train(1000)
-    for root, sub_folders, files in os.walk(imagefile):
-        print("root=%s,sub_folders=%s, files=%s" % (root, sub_folders, files))
+imagefile = "./data/cat_and_dog/train"
+cat = dog = 0
 
-        for name in files:
-            imagefile = os.path.join(root, name)
-            print(imagefile)
-            if per_class(imagefile) == "cat":
-                cat += 1
-            else:
-                dog += 1
-            print("cat is :", cat, "  |dog is : ", dog)
+train(850)
+for root, sub_folders, files in os.walk(imagefile):
+    print("root=%s,sub_folders=%s, files=%s" % (root, sub_folders, files))
+
+    for name in files:
+        imagefile = os.path.join(root, name)
+        print(imagefile)
+        if per_class(imagefile) == "cat":
+            cat += 1
+        else:
+            dog += 1
+        print("cat is :", cat, "  |dog is : ", dog)
 
 
-if __name__ == "__main__":
-    train(100)
-    #predict()
