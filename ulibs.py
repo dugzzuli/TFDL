@@ -143,6 +143,7 @@ def get_batch_test():
     images_list, labels_list = get_file("./data/cat_and_dog/train_r")
     image_batch, label_batch = get_batch(images_list, labels_list, 227, 227, 50, 200)
 
+
 def onehot(labels):
     """one-hot 编码"""
     n_sample = len(labels)
@@ -152,7 +153,12 @@ def onehot(labels):
     return onehot_labels
 
 
+def onehot_test():
+    labels = [1, 3, 2, 4];
+    print(onehot(labels))
+
 if __name__ == "__main__":
     #convert_to_tfrecord_test()
-    read_and_decode_test()
+    #read_and_decode_test()
+    onehot_test()
 

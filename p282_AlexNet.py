@@ -2,15 +2,15 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-import ulibs as reader2
+import ulibs
 import os
 from PIL import Image
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-X_train, y_train = reader2.get_file("./data/cat_and_dog/train_r")
-image_batch, label_batch = reader2.get_batch(X_train, y_train, 227, 227, 200, 2048)
-
+X_train, y_train = ulibs.get_file("./data/cat_and_dog/train_r")
+image_batch, label_batch = ulibs.get_batch(X_train, y_train, 227, 227, 200, 2048)
+save_model = "./data/model/AlexNetModel.ckpt"
 
 def batch_norm(inputs, is_training, is_conv_out=True, decay=0.999):
     scale = tf.Variable(tf.ones([inputs.get_shape()[-1]]))
@@ -130,26 +130,11 @@ with tf.device('/cpu:0'):
     correct_pred = tf.equal(tf.argmax(fc3, 1), tf.argmax(y, 1))
     accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
-init = tf.global_variables_initializer()
-
-
-def onehot(labels):
-    '''one-hot 编码'''
-    n_sample = len(labels)
-    n_class = max(labels) + 1
-    onehot_labels = np.zeros((n_sample, n_class))
-    onehot_labels[np.arange(n_sample), labels] = 1
-    return onehot_labels
-
-
-save_model = ".//data//AlexNetModel.ckpt"
 
 def train(epoch):
     with tf.Session() as sess:
-        sess.run(init)
-
-        save_model = "./data/model//AlexNetModel.ckpt"
-        train_writer = tf.summary.FileWriter("./log", sess.graph)
+        sess.run(tf.global_variables_initializer())
+        train_writer = tf.summary.FileWriter("./data/log", sess.graph)
         saver = tf.train.Saver()
 
         c = []
@@ -162,7 +147,8 @@ def train(epoch):
             step = i
             image, label = sess.run([image_batch, label_batch])
 
-            labels = onehot(label)
+            labels = ulibs.onehot(label)
+            #labels = tf.one_hot(label, 2, 1, 0)
 
             sess.run(optimizer, feed_dict={x: image, y: labels})
             loss_recode = sess.run(loss, feed_dict={x: image, y: labels})
@@ -179,12 +165,12 @@ def train(epoch):
 
         coord.request_stop()
         coord.join(threads)
-        plt.plot(loss)
+        plt.plot(c)
         plt.xlabel('Iter')
         plt.ylabel('loss')
-        plt.title('lr=%f, ti=%d,bs=%d' % (learning_rate, training_iters))
+        plt.title('lr=%f, ti=%d,bs=%d' % (learning_rate, training_iters, batch_size))
         plt.tight_layout()
-        plt.savefig("./data/cat_and_dog_AlexNet.png" % 0, dpi=200)
+        plt.savefig("./data/cat_and_dog_AlexNet.jpg", dpi=200)
 
 
 def per_class(imagefile):
@@ -198,8 +184,8 @@ def per_class(imagefile):
 
     saver = tf.train.Saver()
     with tf.Session() as sess:
-        save_model = tf.train.latest_checkpoint(".//data//model")
-        saver.reshore(sess, save_model)
+        save_model = tf.train.latest_checkpoint("./data/model")
+        saver.restore(sess, save_model)
         image = tf.reshape(image, [1, 227, 227, 3])
         image = sess.run(image)
         prediction = sess.run(fc3, feed_dict={x: image})
@@ -211,21 +197,22 @@ def per_class(imagefile):
             return "dog"
 
 
-
 imagefile = "./data/cat_and_dog/train"
 cat = dog = 0
 
-train(850)
+train(1000)
 for root, sub_folders, files in os.walk(imagefile):
     print("root=%s,sub_folders=%s, files=%s" % (root, sub_folders, files))
 
     for name in files:
         imagefile = os.path.join(root, name)
         print(imagefile)
+
         if per_class(imagefile) == "cat":
+            print("prediction:cat")
             cat += 1
         else:
+            print("prediction:dog")
             dog += 1
         print("cat is :", cat, "  |dog is : ", dog)
-
 
