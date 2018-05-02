@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import time
 import ulibs
 import os
+import cv2
 from PIL import Image
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
@@ -48,7 +49,7 @@ with tf.device('/cpu:0'):
     y = tf.placeholder(tf.int32, [None, n_classes])
 
     W_conv = {
-        'conv1': tf.Variable(tf.truncated_normal([11, 11, 3, 96], stddev=0.0001)),
+        'conv1': tf.Variable(tf.truncated_normal([11, 11, 3, 96], stddev=0.1)),
         'conv2': tf.Variable(tf.truncated_normal([5, 5, 96, 256], stddev=0.01)),
         'conv3': tf.Variable(tf.truncated_normal([3, 3, 256, 384], stddev=0.01)),
         'conv4': tf.Variable(tf.truncated_normal([3, 3, 384, 384], stddev=0.01)),
@@ -147,7 +148,17 @@ def train(epoch):
             step = i
             image, label = sess.run([image_batch, label_batch])
 
+            title = 'unknown'
+            if label[0] == 0:
+                title = 'cat'
+            else:
+                title = 'dog'
+
+            cv2.imshow(title, image[0])
+            cv2.waitKey()
+
             labels = ulibs.onehot(label)
+
             #labels = tf.one_hot(label, 2, 1, 0)
 
             sess.run(optimizer, feed_dict={x: image, y: labels})
@@ -159,10 +170,12 @@ def train(epoch):
             print("time: ", (end_time - start_time))
             start_time = end_time
             print("-------------%d onpech is finished -------------" % i)
+            #print("accuracy:", sess.run(accuracy))
         print("Optimization Finished!")
         saver.save(sess, save_model)
         print("Model Save Finished!")
 
+        cv2.waitKey()
         coord.request_stop()
         coord.join(threads)
         plt.plot(c)
