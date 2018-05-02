@@ -23,7 +23,7 @@ def resize_img(in_dir, out_dir=None, dim=(227, 227)):
 
 
 def resize_img_test():
-    resize_img("./data/cat_and_dog/train/dog/", "./data/cat_and_dog/train_r/dog/")
+    resize_img("./data/cat_and_dog/train/", "./data/cat_and_dog/train_r/")
 
 
 def get_file(file_dir):
@@ -157,8 +157,9 @@ def onehot_test():
     labels = [1, 3, 2, 4];
     print(onehot(labels))
 
+
 if __name__ == "__main__":
     #convert_to_tfrecord_test()
     #read_and_decode_test()
-    onehot_test()
+    resize_img_test()
 
