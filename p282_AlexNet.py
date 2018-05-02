@@ -8,7 +8,7 @@ from PIL import Image
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-X_train, y_train = ulibs.get_file("./data/cat_and_dog/train_r")
+X_train, y_train = ulibs.get_file("./data/cat_and_dog/train/")
 image_batch, label_batch = ulibs.get_batch(X_train, y_train, 227, 227, 200, 2048)
 save_model = "./data/model/AlexNetModel.ckpt"
 
